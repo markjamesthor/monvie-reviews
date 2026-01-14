@@ -263,16 +263,11 @@
             z-index: 1000;
             align-items: center;
             justify-content: center;
+            padding: 20px;
         }
 
         .modal.active {
             display: flex;
-        }
-
-        .modal img {
-            max-width: 90%;
-            max-height: 90%;
-            border-radius: 8px;
         }
 
         .modal-close {
@@ -282,6 +277,125 @@
             color: white;
             font-size: 2rem;
             cursor: pointer;
+            z-index: 1001;
+        }
+
+        /* 리뷰 모달 */
+        .review-modal-content {
+            display: flex;
+            max-width: 1000px;
+            max-height: 90vh;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .review-modal-image {
+            flex: 1;
+            min-width: 300px;
+            max-width: 500px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .review-modal-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            max-height: 90vh;
+        }
+
+        .review-modal-detail {
+            flex: 1;
+            min-width: 300px;
+            padding: 30px;
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+
+        .review-modal-detail .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .review-modal-detail .reviewer-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .review-modal-detail .review-date {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .review-modal-detail .modal-rating .stars {
+            font-size: 1.3rem;
+        }
+
+        .review-modal-detail .review-text {
+            color: #444;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+
+        .review-modal-detail .modal-product-tag {
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .review-modal-thumbnails {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .review-modal-thumbnails img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+
+        .review-modal-thumbnails img:hover,
+        .review-modal-thumbnails img.active {
+            opacity: 1;
+        }
+
+        /* 모달 반응형 */
+        @media (max-width: 768px) {
+            .review-modal-content {
+                flex-direction: column;
+                max-height: 95vh;
+            }
+
+            .review-modal-image {
+                min-width: auto;
+                max-width: none;
+                max-height: 40vh;
+            }
+
+            .review-modal-detail {
+                min-width: auto;
+                max-height: 55vh;
+                padding: 20px;
+            }
         }
 
         /* 로딩 스피너 */
@@ -481,10 +595,28 @@
         </div>
     </main>
 
-    <!-- 이미지 모달 -->
-    <div class="modal" id="image-modal">
+    <!-- 리뷰 모달 -->
+    <div class="modal" id="review-modal">
         <span class="modal-close">&times;</span>
-        <img src="" alt="리뷰 이미지">
+        <div class="review-modal-content">
+            <div class="review-modal-image">
+                <img src="" alt="리뷰 이미지" id="modal-main-image">
+            </div>
+            <div class="review-modal-detail">
+                <div class="modal-header">
+                    <div>
+                        <div class="reviewer-name" id="modal-reviewer"></div>
+                        <div class="review-date" id="modal-date"></div>
+                    </div>
+                    <div class="modal-rating">
+                        <span class="stars" id="modal-stars"></span>
+                    </div>
+                </div>
+                <div class="review-text" id="modal-content"></div>
+                <span class="modal-product-tag" id="modal-product"></span>
+                <div class="review-modal-thumbnails" id="modal-thumbnails"></div>
+            </div>
+        </div>
     </div>
 
     <footer>
@@ -524,7 +656,7 @@
             gallery.innerHTML = photoReviews.map(review => {
                 const img = review.images[0];
                 return `
-                    <div class="photo-item" onclick="openModal('${img}')">
+                    <div class="photo-item" onclick="openReviewModal('${review.id}')">
                         <img src="${img}" alt="리뷰 이미지" loading="lazy">
                         <div class="overlay">
                             <div class="stars">${getStarsHTML(review.rating)}</div>
@@ -598,15 +730,49 @@
             setTimeout(() => renderReviews(reviewsData.reviews, true), 300);
         }
 
-        // 모달 열기
-        function openModal(src) {
-            const modal = document.getElementById('image-modal');
-            modal.querySelector('img').src = src;
+        // 리뷰 모달 열기
+        function openReviewModal(reviewId) {
+            const review = reviewsData.reviews.find(r => r.id === reviewId);
+            if (!review) return;
+
+            const modal = document.getElementById('review-modal');
+            document.getElementById('modal-main-image').src = review.images[0];
+            document.getElementById('modal-reviewer').textContent = review.memberName;
+            document.getElementById('modal-date').textContent = review.date;
+            document.getElementById('modal-stars').textContent = getStarsHTML(review.rating);
+            document.getElementById('modal-content').innerHTML = review.content;
+
+            const productTag = document.getElementById('modal-product');
+            if (review.productName) {
+                productTag.textContent = review.productName;
+                productTag.style.display = 'inline-block';
+            } else {
+                productTag.style.display = 'none';
+            }
+
+            // 썸네일 렌더링
+            const thumbnails = document.getElementById('modal-thumbnails');
+            if (review.images.length > 1) {
+                thumbnails.innerHTML = review.images.map((img, idx) => `
+                    <img src="${img}" alt="썸네일" class="${idx === 0 ? 'active' : ''}" onclick="changeModalImage('${img}', this)">
+                `).join('');
+                thumbnails.style.display = 'flex';
+            } else {
+                thumbnails.style.display = 'none';
+            }
+
             modal.classList.add('active');
         }
 
+        // 모달 이미지 변경
+        function changeModalImage(src, thumbEl) {
+            document.getElementById('modal-main-image').src = src;
+            document.querySelectorAll('#modal-thumbnails img').forEach(img => img.classList.remove('active'));
+            thumbEl.classList.add('active');
+        }
+
         // 모달 닫기
-        document.getElementById('image-modal').addEventListener('click', function(e) {
+        document.getElementById('review-modal').addEventListener('click', function(e) {
             if (e.target === this || e.target.classList.contains('modal-close')) {
                 this.classList.remove('active');
             }
@@ -652,7 +818,7 @@
         // ESC 키로 모달 닫기
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                document.getElementById('image-modal').classList.remove('active');
+                document.getElementById('review-modal').classList.remove('active');
             }
         });
 
