@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>고객 리뷰 - MONVIE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #fafafa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* 헤더 */
+        .review-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        .review-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .review-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* 통계 섹션 */
+        .stats-section {
+            background: white;
+            padding: 40px;
+            margin-top: -30px;
+            margin-bottom: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 30px;
+            text-align: center;
+        }
+
+        .stat-item h3 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-item p {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .average-rating {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .stars {
+            color: #ffc107;
+            font-size: 1.2rem;
+        }
+
+        /* 포토 갤러리 */
+        .photo-gallery-section {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .photo-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .photo-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-item .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            color: white;
+            padding: 20px 15px 15px;
+            font-size: 0.85rem;
+        }
+
+        .photo-item .overlay .stars {
+            font-size: 0.9rem;
+        }
+
+        /* 필터 */
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* 리뷰 리스트 */
+        .reviews-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .review-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .review-card:hover {
+            box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+        }
+
+        .review-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .reviewer-info h4 {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .reviewer-info .meta {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .review-rating .stars {
+            font-size: 1.1rem;
+        }
+
+        .review-content {
+            color: #444;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+        }
+
+        .review-images {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .review-images img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .review-images img:hover {
+            transform: scale(1.05);
+        }
+
+        .product-tag {
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        /* 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        /* 더보기 버튼 */
+        .load-more {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 40px auto;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .load-more:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .load-more:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* 푸터 */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .review-header h1 {
+                font-size: 1.8rem;
+            }
+
+            .stats-section {
+                padding: 25px;
+            }
+
+            .stat-item h3 {
+                font-size: 2rem;
+            }
+
+            .photo-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 10px;
+            }
+
+            .review-card {
+                padding: 20px;
+            }
+
+            .review-images img {
+                width: 80px;
+                height: 80px;
+            }
+        }
+
+        /* 탭 네비게이션 */
+        .tab-nav {
+            display: flex;
+            gap: 0;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab-btn {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            color: #888;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 리뷰 카운트 뱃지 */
+        .count-badge {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <header class="review-header">
+        <div class="container">
+            <h1>고객님들의 소중한 후기</h1>
+            <p>MONVIE를 사랑해주시는 고객님들의 진솔한 이야기</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3 id="total-reviews">0</h3>
+                    <p>전체 리뷰</p>
+                </div>
+                <div class="stat-item">
+                    <h3 id="photo-reviews">0</h3>
+                    <p>포토 리뷰</p>
+                </div>
+                <div class="stat-item">
+                    <div class="average-rating">
+                        <h3 id="avg-rating">0</h3>
+                        <span class="stars" id="avg-stars"></span>
+                    </div>
+                    <p>평균 별점</p>
+                </div>
+                <div class="stat-item">
+                    <h3 id="five-star-percent">0%</h3>
+                    <p>5점 리뷰 비율</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="photo">
+                포토 리뷰 <span class="count-badge" id="photo-count">0</span>
+            </button>
+            <button class="tab-btn" data-tab="all">
+                전체 리뷰 <span class="count-badge" id="all-count">0</span>
+            </button>
+        </div>
+
+        <!-- 포토 리뷰 탭 -->
+        <div class="tab-content active" id="tab-photo">
+            <section class="photo-gallery-section">
+                <div class="photo-grid" id="photo-gallery"></div>
+            </section>
+        </div>
+
+        <!-- 전체 리뷰 탭 -->
+        <div class="tab-content" id="tab-all">
+            <div class="filter-section">
+                <button class="filter-btn active" data-rating="all">전체</button>
+                <button class="filter-btn" data-rating="5">5점</button>
+                <button class="filter-btn" data-rating="4">4점</button>
+                <button class="filter-btn" data-rating="3">3점 이하</button>
+            </div>
+            <div class="reviews-list" id="reviews-list"></div>
+            <button class="load-more" id="load-more">더 보기</button>
+        </div>
+    </main>
+
+    <!-- 이미지 모달 -->
+    <div class="modal" id="image-modal">
+        <span class="modal-close">&times;</span>
+        <img src="" alt="리뷰 이미지">
+    </div>
+
+    <footer>
+        <p>&copy; MONVIE. All rights reserved.</p>
+    </footer>
+
+    <script>
+        let reviewsData = { stats: {}, reviews: [] };
+        let displayedCount = 0;
+        const perPage = 10;
+        let currentFilter = 'all';
+
+        // 별점 HTML 생성
+        function getStarsHTML(rating) {
+            return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+        }
+
+        // 통계 업데이트
+        function updateStats(stats) {
+            document.getElementById('total-reviews').textContent = stats.total;
+            document.getElementById('photo-reviews').textContent = stats.withPhotos;
+            document.getElementById('avg-rating').textContent = stats.averageRating;
+            document.getElementById('avg-stars').textContent = getStarsHTML(Math.round(parseFloat(stats.averageRating)));
+
+            const fiveStarPercent = Math.round((stats.ratingCounts[5] / stats.total) * 100);
+            document.getElementById('five-star-percent').textContent = fiveStarPercent + '%';
+
+            document.getElementById('photo-count').textContent = stats.withPhotos;
+            document.getElementById('all-count').textContent = stats.total;
+        }
+
+        // 포토 갤러리 렌더링
+        function renderPhotoGallery(reviews) {
+            const photoReviews = reviews.filter(r => r.hasPhoto);
+            const gallery = document.getElementById('photo-gallery');
+
+            gallery.innerHTML = photoReviews.map(review => {
+                const img = review.images[0];
+                return `
+                    <div class="photo-item" onclick="openModal('${img}')">
+                        <img src="${img}" alt="리뷰 이미지" loading="lazy">
+                        <div class="overlay">
+                            <div class="stars">${getStarsHTML(review.rating)}</div>
+                            <div>${review.memberName}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 리뷰 리스트 렌더링
+        function renderReviews(reviews, append = false) {
+            const filtered = reviews.filter(r => {
+                if (currentFilter === 'all') return true;
+                if (currentFilter === '5') return r.rating === 5;
+                if (currentFilter === '4') return r.rating === 4;
+                if (currentFilter === '3') return r.rating <= 3;
+                return true;
+            });
+
+            const toRender = filtered.slice(displayedCount, displayedCount + perPage);
+            const list = document.getElementById('reviews-list');
+
+            const html = toRender.map(review => `
+                <div class="review-card">
+                    <div class="review-header-row">
+                        <div class="reviewer-info">
+                            <h4>${review.memberName}</h4>
+                            <span class="meta">${review.date}</span>
+                        </div>
+                        <div class="review-rating">
+                            <span class="stars">${getStarsHTML(review.rating)}</span>
+                        </div>
+                    </div>
+                    <div class="review-content">${review.content}</div>
+                    ${review.images.length > 0 ? `
+                        <div class="review-images">
+                            ${review.images.map(img => `
+                                <img src="${img}" alt="리뷰 이미지" onclick="openModal('${img}')" loading="lazy">
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    ${review.productName ? `<span class="product-tag">${review.productName}</span>` : ''}
+                </div>
+            `).join('');
+
+            if (append) {
+                list.innerHTML += html;
+            } else {
+                list.innerHTML = html;
+            }
+
+            displayedCount += toRender.length;
+
+            const loadMoreBtn = document.getElementById('load-more');
+            if (displayedCount >= filtered.length) {
+                loadMoreBtn.disabled = true;
+                loadMoreBtn.textContent = '모든 리뷰를 불러왔습니다';
+            } else {
+                loadMoreBtn.disabled = false;
+                loadMoreBtn.textContent = '더 보기';
+            }
+        }
+
+        // 모달 열기
+        function openModal(src) {
+            const modal = document.getElementById('image-modal');
+            modal.querySelector('img').src = src;
+            modal.classList.add('active');
+        }
+
+        // 모달 닫기
+        document.getElementById('image-modal').addEventListener('click', function(e) {
+            if (e.target === this || e.target.classList.contains('modal-close')) {
+                this.classList.remove('active');
+            }
+        });
+
+        // 탭 전환
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                this.classList.add('active');
+                document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+            });
+        });
+
+        // 필터 클릭
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.rating;
+                displayedCount = 0;
+                renderReviews(reviewsData.reviews);
+            });
+        });
+
+        // 더보기 클릭
+        document.getElementById('load-more').addEventListener('click', function() {
+            renderReviews(reviewsData.reviews, true);
+        });
+
+        // ESC 키로 모달 닫기
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.getElementById('image-modal').classList.remove('active');
+            }
+        });
+
+        // 데이터 로드
+        fetch('reviews_data.json')
+            .then(res => res.json())
+            .then(data => {
+                reviewsData = data;
+                updateStats(data.stats);
+                renderPhotoGallery(data.reviews);
+                renderReviews(data.reviews);
+            })
+            .catch(err => {
+                console.error('데이터 로드 실패:', err);
+            });
+    </script>
+</body>
+</html>
