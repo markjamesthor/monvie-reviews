@@ -284,32 +284,45 @@
             cursor: pointer;
         }
 
-        /* 더보기 버튼 */
-        .load-more {
+        /* 로딩 스피너 */
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-spinner.active {
             display: block;
-            width: 100%;
-            max-width: 300px;
-            margin: 40px auto;
-            padding: 15px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 30px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .load-more:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 15px;
         }
 
-        .load-more:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-spinner p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .end-message {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            display: none;
+        }
+
+        .end-message.active {
+            display: block;
         }
 
         /* 푸터 */
@@ -460,7 +473,11 @@
                 <button class="filter-btn" data-rating="3">3점 이하</button>
             </div>
             <div class="reviews-list" id="reviews-list"></div>
-            <button class="load-more" id="load-more">더 보기</button>
+            <div class="loading-spinner" id="loading-spinner">
+                <div class="spinner"></div>
+                <p>리뷰를 불러오는 중...</p>
+            </div>
+            <div class="end-message" id="end-message">모든 리뷰를 불러왔습니다</div>
         </div>
     </main>
 
@@ -519,15 +536,21 @@
         }
 
         // 리뷰 리스트 렌더링
-        function renderReviews(reviews, append = false) {
-            const filtered = reviews.filter(r => {
+        let isLoading = false;
+        let hasMore = true;
+
+        function getFilteredReviews(reviews) {
+            return reviews.filter(r => {
                 if (currentFilter === 'all') return true;
                 if (currentFilter === '5') return r.rating === 5;
                 if (currentFilter === '4') return r.rating === 4;
                 if (currentFilter === '3') return r.rating <= 3;
                 return true;
             });
+        }
 
+        function renderReviews(reviews, append = false) {
+            const filtered = getFilteredReviews(reviews);
             const toRender = filtered.slice(displayedCount, displayedCount + perPage);
             const list = document.getElementById('reviews-list');
 
@@ -561,15 +584,18 @@
             }
 
             displayedCount += toRender.length;
+            hasMore = displayedCount < filtered.length;
 
-            const loadMoreBtn = document.getElementById('load-more');
-            if (displayedCount >= filtered.length) {
-                loadMoreBtn.disabled = true;
-                loadMoreBtn.textContent = '모든 리뷰를 불러왔습니다';
-            } else {
-                loadMoreBtn.disabled = false;
-                loadMoreBtn.textContent = '더 보기';
-            }
+            document.getElementById('end-message').classList.toggle('active', !hasMore);
+            isLoading = false;
+            document.getElementById('loading-spinner').classList.remove('active');
+        }
+
+        function loadMoreReviews() {
+            if (isLoading || !hasMore) return;
+            isLoading = true;
+            document.getElementById('loading-spinner').classList.add('active');
+            setTimeout(() => renderReviews(reviewsData.reviews, true), 300);
         }
 
         // 모달 열기
@@ -604,13 +630,23 @@
                 this.classList.add('active');
                 currentFilter = this.dataset.rating;
                 displayedCount = 0;
+                hasMore = true;
+                document.getElementById('end-message').classList.remove('active');
                 renderReviews(reviewsData.reviews);
             });
         });
 
-        // 더보기 클릭
-        document.getElementById('load-more').addEventListener('click', function() {
-            renderReviews(reviewsData.reviews, true);
+        // 무한 스크롤
+        window.addEventListener('scroll', function() {
+            if (!document.getElementById('tab-all').classList.contains('active')) return;
+
+            const scrollTop = window.scrollY;
+            const windowHeight = window.innerHeight;
+            const docHeight = document.documentElement.scrollHeight;
+
+            if (scrollTop + windowHeight >= docHeight - 300) {
+                loadMoreReviews();
+            }
         });
 
         // ESC 키로 모달 닫기
