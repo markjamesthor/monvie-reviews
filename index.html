@@ -527,6 +527,51 @@
             font-size: 0.75rem;
             margin-left: 8px;
         }
+
+        /* 제품 필터 */
+        .product-filter {
+            margin-bottom: 20px;
+        }
+
+        .product-select {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 40px 12px 15px;
+            font-size: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 15px center;
+            appearance: none;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .product-select:hover, .product-select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .current-product-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .current-product-banner h3 {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .current-product-banner a {
+            color: white;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -561,6 +606,19 @@
                 </div>
             </div>
         </section>
+
+        <!-- 제품 필터 (특정 제품 선택 시 표시) -->
+        <div class="current-product-banner" id="product-banner" style="display: none;">
+            <h3 id="current-product-name">제품명</h3>
+            <a href="?" id="show-all-link">전체 리뷰 보기</a>
+        </div>
+
+        <!-- 제품 선택 드롭다운 -->
+        <div class="product-filter" id="product-filter">
+            <select class="product-select" id="product-select">
+                <option value="">전체 제품</option>
+            </select>
+        </div>
 
         <div class="tab-nav">
             <button class="tab-btn active" data-tab="photo">
@@ -624,28 +682,71 @@
     </footer>
 
     <script>
-        let reviewsData = { stats: {}, reviews: [] };
+        let reviewsData = { stats: {}, products: [], reviews: [] };
+        let filteredReviewsData = [];
         let displayedCount = 0;
         const perPage = 10;
         let currentFilter = 'all';
+        let currentProductNo = '';
+
+        // URL 파라미터에서 product_no 가져오기
+        function getProductNoFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('product_no') || '';
+        }
 
         // 별점 HTML 생성
         function getStarsHTML(rating) {
             return '★'.repeat(rating) + '☆'.repeat(5 - rating);
         }
 
-        // 통계 업데이트
-        function updateStats(stats) {
-            document.getElementById('total-reviews').textContent = stats.total;
-            document.getElementById('photo-reviews').textContent = stats.withPhotos;
-            document.getElementById('avg-rating').textContent = stats.averageRating;
-            document.getElementById('avg-stars').textContent = getStarsHTML(Math.round(parseFloat(stats.averageRating)));
+        // 통계 업데이트 (필터된 리뷰 기준)
+        function updateStats(reviews) {
+            const total = reviews.length;
+            const withPhotos = reviews.filter(r => r.hasPhoto).length;
+            const avgRating = total > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / total).toFixed(1) : '0';
+            const fiveStarCount = reviews.filter(r => r.rating === 5).length;
+            const fiveStarPercent = total > 0 ? Math.round((fiveStarCount / total) * 100) : 0;
 
-            const fiveStarPercent = Math.round((stats.ratingCounts[5] / stats.total) * 100);
+            document.getElementById('total-reviews').textContent = total;
+            document.getElementById('photo-reviews').textContent = withPhotos;
+            document.getElementById('avg-rating').textContent = avgRating;
+            document.getElementById('avg-stars').textContent = getStarsHTML(Math.round(parseFloat(avgRating)));
             document.getElementById('five-star-percent').textContent = fiveStarPercent + '%';
+            document.getElementById('photo-count').textContent = withPhotos;
+            document.getElementById('all-count').textContent = total;
+        }
 
-            document.getElementById('photo-count').textContent = stats.withPhotos;
-            document.getElementById('all-count').textContent = stats.total;
+        // 제품 드롭다운 렌더링
+        function renderProductSelect(products) {
+            const select = document.getElementById('product-select');
+            select.innerHTML = '<option value="">전체 제품</option>' +
+                products.map(p => `<option value="${p.no}">${p.name} (${p.count})</option>`).join('');
+        }
+
+        // 제품 필터 적용
+        function applyProductFilter(productNo) {
+            currentProductNo = productNo;
+
+            if (productNo) {
+                filteredReviewsData = reviewsData.reviews.filter(r => r.productNo === productNo);
+                const product = reviewsData.products.find(p => p.no === productNo);
+                document.getElementById('product-banner').style.display = 'flex';
+                document.getElementById('current-product-name').textContent = product ? product.name + ' 리뷰' : '제품 리뷰';
+                document.getElementById('product-filter').style.display = 'none';
+            } else {
+                filteredReviewsData = reviewsData.reviews;
+                document.getElementById('product-banner').style.display = 'none';
+                document.getElementById('product-filter').style.display = 'block';
+            }
+
+            // 통계 및 갤러리 업데이트
+            updateStats(filteredReviewsData);
+            renderPhotoGallery(filteredReviewsData);
+            displayedCount = 0;
+            hasMore = true;
+            document.getElementById('end-message').classList.remove('active');
+            renderReviews(filteredReviewsData);
         }
 
         // 포토 갤러리 렌더링
@@ -671,8 +772,8 @@
         let isLoading = false;
         let hasMore = true;
 
-        function getFilteredReviews(reviews) {
-            return reviews.filter(r => {
+        function getFilteredReviews() {
+            return filteredReviewsData.filter(r => {
                 if (currentFilter === 'all') return true;
                 if (currentFilter === '5') return r.rating === 5;
                 if (currentFilter === '4') return r.rating === 4;
@@ -682,7 +783,7 @@
         }
 
         function renderReviews(reviews, append = false) {
-            const filtered = getFilteredReviews(reviews);
+            const filtered = getFilteredReviews();
             const toRender = filtered.slice(displayedCount, displayedCount + perPage);
             const list = document.getElementById('reviews-list');
 
@@ -727,7 +828,7 @@
             if (isLoading || !hasMore) return;
             isLoading = true;
             document.getElementById('loading-spinner').classList.add('active');
-            setTimeout(() => renderReviews(reviewsData.reviews, true), 300);
+            setTimeout(() => renderReviews(filteredReviewsData, true), 300);
         }
 
         // 리뷰 모달 열기
@@ -798,8 +899,18 @@
                 displayedCount = 0;
                 hasMore = true;
                 document.getElementById('end-message').classList.remove('active');
-                renderReviews(reviewsData.reviews);
+                renderReviews(filteredReviewsData);
             });
+        });
+
+        // 제품 선택 변경
+        document.getElementById('product-select').addEventListener('change', function() {
+            const productNo = this.value;
+            if (productNo) {
+                window.location.href = '?product_no=' + productNo;
+            } else {
+                window.location.href = '?';
+            }
         });
 
         // 무한 스크롤
@@ -827,9 +938,14 @@
             .then(res => res.json())
             .then(data => {
                 reviewsData = data;
-                updateStats(data.stats);
-                renderPhotoGallery(data.reviews);
-                renderReviews(data.reviews);
+                renderProductSelect(data.products || []);
+
+                // URL 파라미터 확인
+                const productNo = getProductNoFromUrl();
+                if (productNo) {
+                    document.getElementById('product-select').value = productNo;
+                }
+                applyProductFilter(productNo);
             })
             .catch(err => {
                 console.error('데이터 로드 실패:', err);
